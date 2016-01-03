@@ -11,14 +11,13 @@ import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
+import android.os.PowerManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -40,25 +39,24 @@ public class MainActivity extends AppCompatActivity {
     private static boolean flagEkle = false;
     private static String tempDomText = null;
     private static String controlDomText = null;
-    ProgressDialog mProgressDialog;
+    //
     @ViewById(R.id.webView)
     WebView webView;
-    @ViewById(R.id.fab)
-    FloatingActionButton fab;
     @ViewById(R.id.toolbar)
     Toolbar toolbar;
     @ViewById(R.id.edittext_Adres)
     EditText editTextAdres;
     @ViewById(R.id.edittext_DomId)
     EditText edittextDomId;
+    //
+    private ProgressDialog mProgressDialog;
     private CustomWebViewClient webViewClient;
     private String Url = "http://e-randevu.iem.gov.tr/randevu/Default.aspx";
-    private int mInterval = 5000; // 5 seconds by default, can be changed later
+    private int mInterval = 2000;
     private Handler mHandler;
     Runnable mStatusChecker = new Runnable() {
         @Override
         public void run() {
-            //updateStatus(); //this function can change value of mInterval.
             webView.reload();
             mHandler.postDelayed(mStatusChecker, mInterval);
         }
@@ -118,11 +116,16 @@ public class MainActivity extends AppCompatActivity {
 
         editTextAdres.setText(Url);
 
+
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "wk_tag");
+        wakeLock.acquire();
         //showNotificationMessage(MainActivity.this, "Randevu Al", "Text Değişti", null);
     }
 
     void startRepeatingTask() {
-        mStatusChecker.run();
+        mHandler.post(mStatusChecker);
+        //mStatusChecker.run();
     }
 
     void stopRepeatingTask() {
@@ -131,7 +134,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Click(R.id.btnBasla)
     public void btnBaslaClick() {
-        startRepeatingTask();
+        if (edittextDomId.getText().toString() == null) {
+            Snackbar.make(edittextDomId, "Kontrol edilecek alanın 'id' sini giriniz", Snackbar.LENGTH_INDEFINITE).show();
+        } else {
+            startRepeatingTask();
+        }
+
     }
 
     @Click(R.id.btnDur)
@@ -139,13 +147,13 @@ public class MainActivity extends AppCompatActivity {
         stopRepeatingTask();
     }
 
-    @Click(R.id.btnEkle)
+    @Click(R.id.btnDomEkle)
     public void btnEkleClick() {
         flagEkle = true;
         if (tempDomText != null) {
             controlDomText = tempDomText;
         } else {
-            Snackbar.make(fab, "TempDomText Boş.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(edittextDomId, "Belirttiğiniz kontrol id si sayfada bulunmuyor.Lütfen Kontrol ediniz.", Snackbar.LENGTH_INDEFINITE).show();
         }
     }
 
@@ -171,12 +179,6 @@ public class MainActivity extends AppCompatActivity {
         Url = editTextAdres.getText().toString();
         webView.loadUrl(Url);
         // editTextAdres.setText(webView.getUrl());
-    }
-
-    @Click(R.id.fab)
-    public void fabClick(View view) {
-        Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
     }
 
     @Override
@@ -318,9 +320,12 @@ public class MainActivity extends AppCompatActivity {
             // String data1 = Jsoup.parse(html).select("#LinkButton2").toString();
             if (!flagEkle) {
                 Toast.makeText(MainActivity.this, data, Toast.LENGTH_LONG).show();
+                Snackbar.make(edittextDomId, "abc", Snackbar.LENGTH_INDEFINITE).show();
+                //showNotificationMessage(getApplicationContext(), "Randevu Al", "Text Değişti", null);
+
             } else {
                 if (!data.equals(controlDomText)) {
-                    showNotificationMessage(MainActivity.this, "Randevu Al", "Text Değişti", null);
+                    showNotificationMessage(getApplicationContext(), "Randevu Al", "Text Değişti", null);
                 }
             }
             // Jsoup.parse(html).body()

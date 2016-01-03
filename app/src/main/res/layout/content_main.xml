@@ -46,7 +46,7 @@
             android:layout_weight="0.70" />
 
         <Button
-            android:id="@+id/btnEkle"
+            android:id="@+id/btnDomEkle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.30"
